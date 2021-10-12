@@ -1,6 +1,7 @@
 from tkinter import Tk, Label, Button, StringVar
 from time import sleep
 from typing import Callable
+from abc import abstractmethod
 import threading
 
 
@@ -8,7 +9,7 @@ class TaskThread(threading.Thread):
     def __init__(self, task):
         """
         :param task: Reference to the wrapper around actual task holding threading.Thread() object
-        :type task: BackgroundTask
+        :type task: AsyncTask
         """
         threading.Thread.__init__(self)
         self.task = task
@@ -21,7 +22,22 @@ class TaskThread(threading.Thread):
         self.task.stop()
 
 
-class BackgroundTask:
+class Task:
+
+    @abstractmethod
+    def start(self):
+        pass
+
+    @abstractmethod
+    def stop(self):
+        pass
+
+    @abstractmethod
+    def is_running(self):
+        pass
+
+
+class AsyncTask(Task):
 
     def __init__(self, task_pointer):
         """
@@ -36,7 +52,7 @@ class BackgroundTask:
         return self.task_pointer
 
     def is_running(self):
-        return self.running and self.thread.isAlive()
+        return self.running and self.thread.is_alive()
 
     def start(self):
         if not self.running:
@@ -48,7 +64,7 @@ class BackgroundTask:
         self.running = False
 
 
-class Task:
+class SyncTask(Task):
 
     def __init__(self, root_object, task_pointer, freq_mls):
         """
@@ -122,9 +138,9 @@ class UnitTestGUI:
 
         self.click_counter = 0
 
-        self.task = BackgroundTask(self.time_consuming_execution)
+        self.task = AsyncTask(self.time_consuming_execution)
 
-        self.timer = Task(self.master, self.update_timer_label, 1)
+        self.timer = SyncTask(self.master, self.update_timer_label, 1)
 
     def close(self):
         print("close")
